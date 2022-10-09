@@ -1,4 +1,4 @@
-import { defineFactory } from "../src/defineFactory";
+import { defineFactory } from "../src";
 import { faker } from "@faker-js/faker";
 
 type User = {
