@@ -3,65 +3,83 @@ type FactoryCreateOptions = {
   forceArray?: boolean;
 };
 
-export function defineFactory<T = Record<string, unknown>>(
-  factoryDefinition: FactoryDefinitionFn<T>
-) {
-  const definitions = new Map<string, FactoryDefinitionFn<T>>();
+class Factory<T> {
+  private _stateNames;
+  private _builder;
 
-  definitions.set("_default", factoryDefinition);
+  constructor(builder: FactoryBuilder<T>) {
+    this._builder = builder;
+    this._stateNames = new Set<string>(["_default"]);
+  }
 
-  const factory = {
-    defineState(name: string, definition: FactoryDefinitionFn<T>) {
-      definitions.set(name, definition);
-      return this;
-    },
+  state(name: string) {
+    if (!this._builder.hasDefinition(name)) {
+      throw new Error(`State with name "${name}" is not defined`);
+    }
 
-    get() {
-      const stateNames = new Set<string>(["_default"]);
+    this._stateNames.add(name);
+    return this;
+  }
 
-      const resolveObj = () =>
-        Array.from(stateNames).reduce((obj: T, stateName: string) => {
-          const definitionFn = definitions.get(
-            stateName
-          ) as FactoryDefinitionFn<T>;
+  create(
+    quantity = 1,
+    override?: FactoryDefinitionFn<T> | null,
+    options: FactoryCreateOptions = {}
+  ) {
+    const { forceArray = false } = options;
+    if (override) {
+      this._builder.defineState("_override", override);
+      this.state("_override");
+    }
+
+    const data = Array.from({ length: quantity }).map(() => {
+      return Array.from(this._stateNames).reduce(
+        (obj: T, stateName: string) => {
+          const definitionFn = this._builder.getDefinition(stateName);
+
+          if (!definitionFn) {
+            return obj;
+          }
 
           return { ...obj, ...definitionFn() };
-        }, {} as T);
-
-      const factoryBuilder = {
-        state(name: string) {
-          if (!definitions.has(name)) {
-            throw new Error(`State with name "${name}" is not defined`);
-          }
-
-          stateNames.add(name);
-          return this;
         },
+        {} as T
+      );
+    });
 
-        create(
-          quantity = 1,
-          override?: FactoryDefinitionFn<T> | null,
-          options: FactoryCreateOptions = {}
-        ) {
-          const { forceArray = false } = options;
+    return quantity === 1 && !forceArray ? data[0] : data;
+  }
+}
 
-          if (override) {
-            factory.defineState("_override", override);
-            this.state("_override");
-          }
+class FactoryBuilder<T> {
+  private _definitions;
 
-          const data: T[] = [];
+  constructor(definition: FactoryDefinitionFn<T>) {
+    this._definitions = new Map<string, FactoryDefinitionFn<T>>();
+    this._definitions.set(
+      "_default",
+      definition instanceof Function ? definition : () => definition
+    );
+  }
 
-          Array.from({ length: quantity }).forEach(() =>
-            data.push(resolveObj())
-          );
+  defineState(name: string, definition: FactoryDefinitionFn<T>) {
+    this._definitions.set(name, definition);
+    return this;
+  }
 
-          return quantity === 1 && !forceArray ? data[0] : data;
-        },
-      };
-      return factoryBuilder;
-    },
-  };
+  getDefinition(name: string) {
+    return this._definitions.get(name);
+  }
 
-  return factory;
+  hasDefinition(name: string) {
+    return this._definitions.has(name);
+  }
+
+  get() {
+    return new Factory<T>(this);
+  }
+}
+
+export function defineFactory<T>(definition: FactoryDefinitionFn<T>) {
+  return new FactoryBuilder<T>(definition);
 }
