@@ -16,4 +16,5 @@ module.exports = {
     sourceType: "module",
   },
   plugins: ["@typescript-eslint", "jest"],
+  ignorePatterns: ["dist", "rollup.config.js"],
 };
