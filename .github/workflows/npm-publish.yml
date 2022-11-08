@@ -8,17 +8,17 @@ on:
     types: [created]
 
 jobs:
-  build:
+  test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
           node-version: 16
-      - run: yarn
+      - run: yarn install
       - run: yarn test
 
-  publish-npm:
+  publish:
     needs: build
     runs-on: ubuntu-latest
     steps:
@@ -27,7 +27,6 @@ jobs:
         with:
           node-version: 16
           registry-url: https://registry.npmjs.org/
-      - run: yarn
       - run: yarn publish --access public --new-version ${{ github.ref_name }}
         env:
           NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
