@@ -5,7 +5,7 @@ type User = {
   name: string;
   surname: string;
   email: string;
-  premium?: boolean;
+  premium?: boolean | string;
 };
 
 describe("defineFactory Function", () => {
@@ -47,7 +47,7 @@ describe("defineFactory Function", () => {
     expect(user).toEqual({ ...expectedObj, name: "Mark" });
   });
 
-  it("should create 2 users", () => {
+  it("should create a list of users", () => {
     const userFactory = defineFactory<User>(() => ({
       name: faker.name.firstName(),
       surname: faker.name.lastName(),
@@ -98,6 +98,23 @@ describe("defineFactory Function", () => {
 
     expect(() => userFactory.state("testing")).toThrow(
       'State with name "testing" is not defined'
+    );
+  });
+
+  it("should throw an error if a state name is already used", () => {
+    const fn = () => {
+      defineFactory<User>(() => ({
+        name: faker.name.firstName(),
+        surname: faker.name.lastName(),
+        email: faker.internet.email(),
+      }))
+        .defineState("premium", () => ({ premium: true }))
+        .defineState("premium", () => ({ premium: "life-time" }))
+        .get();
+    };
+
+    expect(fn).toThrow(
+      'State name "premium" already taken. Please use another name.'
     );
   });
 });

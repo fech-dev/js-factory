@@ -63,6 +63,12 @@ class FactoryBuilder<T> {
   }
 
   defineState(name: string, definition: FactoryDefinitionFn<T>) {
+    if (this._definitions.has(name)) {
+      throw new Error(
+        `State name "${name}" already taken. Please use another name.`
+      );
+    }
+
     this._definitions.set(name, definition);
     return this;
   }
