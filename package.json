@@ -1,13 +1,19 @@
 {
-  "name": "js-factory",
+  "name": "@federico.mameli/js-factory",
   "version": "1.0.0",
-  "description": "Javascript library for creating factory",
+  "description": "Javascript library for creating factories",
   "main": "dist/index.js",
   "module": "dist/index.es.js",
   "types": "dist/index.d.ts",
   "repository": "https://github.com/fech-dev/js-factory.git",
   "author": "Federico Mameli <federico_mameli@yahoo.it>",
   "license": "MIT",
+  "keywords": [
+    "fake data",
+    "tests",
+    "factory",
+    "factories"
+  ],
   "files": [
     "dist"
   ],
